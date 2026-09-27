@@ -1,0 +1,81 @@
+Cinco días — Estudiar, pensar e implementar (sin clase)
+Estos cinco días no hay sesión. El equipo (los mismos cinco) implementa el enunciado de La empresa de entregas como aplicación web, leyendo Patrones de software para aplicaciones web. El marco recomendado es Django: ya trae portería, middleware, plantillas y ORM. Si el equipo justifica por escrito otro marco (Laravel, Spring, Express), vale; lo que no vale es copiar un proyecto listo ni reimplementar el diagrama GoF al lado de lo que Django ya instancia.
+
+El cliente del semestre es web y móvil. En estos cinco días el alcance obligatorio es: panel web + un GET JSON del mismo pedido (para que la app exista como contrato, aunque la app aún no se programe). No se pide Event Sourcing, ni Redux, ni un PDF con CQRS.
+
+No se les entrega el código de la plataforma. Lo escriben ustedes. Las definiciones están en los apuntes (Strategy, Adapter, quién hace el new, Front Controller, Template View, Service Layer, PRG, transacción). Un asistente de IA puede explicar; no puede ser el autor del diseño: cada decisión se justifica con una fuerza de este relato.
+
+Entrega al volver (un repo o una carpeta por equipo):
+
+código que arranca;
+un README de una página (cómo correrlo y qué patrón cubre cada conflicto);
+las notas escritas de cada día (pueden ir en notas/).
+Día 1 — Estudiar el caso web (sin código de dominio)
+Lectura obligatoria, en este orden:
+
+La empresa de entregas y Cosas a tomar en cuenta.
+Patrones de software para aplicaciones web, hasta Ejemplo de análisis: registrar un pedido (y cobrar).
+En Django, qué pieza ya es Front Controller, middleware, plantilla y vista (la documentación corta del propio marco basta).
+Por escrito, una tabla. No pongan «MVC» como respuesta de un renglón.
+
+#	Inconveniente del enunciado	Qué ya trae Django	Qué tendremos que escribir nosotros	Qué no vamos a copiar del libro
+1	 	 	 	 
+…	 	 	 	 
+7	 	 	 	 
+Al final del día: tres renglones. ¿=urls.py= es Front Controller, Page Controller, o el camino hacia los dos? ¿La plantilla Jinja/Django puede hacer SELECT? ¿Por qué sí o por qué no?
+
+Día 2 — Pensar el primer corte y arrancar Django
+Objetivo: que exista el proyecto y una petición, todavía sin los cuatro medios ni la IA.
+
+Crear el proyecto Django. Una app, por ejemplo entregas.
+Recursos: POST /pedidos da de alta (aunque sea a mano, sin IA); GET /pedidos/<id> muestra seguimiento. Tras el POST, redirigir al GET (PRG). Recargar no debe crear otro folio.
+La vista (Page Controller) queda delgada: llama a algo con nombre de trámite, p. ej. registrar_pedido(...). No pongan el switch de camioneta en la vista. No pongan SQL en la plantilla: el contexto llega ya listo (folio, estado, un ETA de mentira vale hoy).
+Por escrito: el camino de POST /pedidos como en el ejemplo de análisis de los apuntes, pero con nombres de Django (middleware, urls, vista, servicio, plantilla). Marquen qué línea no es GoF porque el marco ya la instancia.
+
+Al final del día el servidor levanta y se ve un pedido. Feo vale; mezclar sesión, SQL y medios en la vista no.
+
+Día 3 — Strategy, Adapter y quién hace el new
+Objetivo: el inconveniente 2 del enunciado, con las definiciones de Los problemas de esta plataforma (no con un ejemplo ajeno terminado).
+
+Contrato MedioDeEntrega.planear(pedido, contexto) → plan y una clase (o función) por medio: camioneta, motocicleta, bicicleta, dron. Eso es Strategy. Un if de dos casos estables no sustituye a cuatro medios que van a crecer.
+Un proveedor falso de IA que devuelve JSON con route_hint y score (no hace falta pagar OpenAI). Otro camino, aunque sea un string XML con vehicle. El dominio solo entiende Sugerencia(medio, motivo). Eso es Adapter. Si route_hint aparece en la vista o en el planear, el idioma ajeno se coló.
+Quien hace el new: con el string que ya vino en la sugerencia, una fábrica simple crear("dron") es lo esperado. Factory Method (LogisticaAerea.crearMedio) solo si tienen familias de trámite que redefinen el gancho; no lo monten para disfrazar el switch.
+registrar_pedido orquesta: Adapter → crear medio → Strategy. La vista sigue sin conocer EntregaDron.
+
+Por escrito: una frase por patrón (qué inconveniente, qué vecino no es). Si usaron Factory Method, justifiquen por qué no bastaba la fábrica simple.
+
+Día 4 — Plantilla limpia, transacción e IA caída
+Objetivo: inconvenientes 3, 4 y 6, con lo que ya dice el capítulo web.
+
+La plantilla de seguimiento pinta mapa (aunque sea un recuadro) y ETA. No consulta la base. Si hay un reporte, no copia las mismas consultas dentro de otro HTML: reutiliza el trámite que ya armó los datos.
+Alta de pedido (y un cobro simulado si les da tiempo) dentro de transaction.atomic. El aviso (correo o un print / señal) va después de que la transacción confirmó. Si el aviso falla, el pedido sí quedó. Observer no sustituye la transacción.
+El colaborador de IA se puede apagar (un flag, un timeout, un error a propósito). GET /pedidos/<id> de un folio ya guardado sigue respondiendo. La rueda infinita mientras la IA no habla no es diseño.
+Por escrito: qué harían si el cliente pulsa dos veces «crear» (PRG y, si hay dinero de mentira, idempotencia). No pidan Event Sourcing para esto.
+
+Día 5 — El mismo pedido en JSON y la defensa
+Objetivo: inconveniente 5 (el panel y la app no tienen la misma hambre) y poder explicar el repo sin el docente al lado.
+
+El mismo folio: HTML en el panel y GET /api/pedidos/<id> con JSON mínimo (folio, estado, eta). No hagan doce consultas para armar el inicio. Un recurso de agregación basta para esta semana.
+README: cómo se corre; Django qué patrón ya traía y ustedes no reescribieron; qué archivo es Adapter, Strategy y el trámite; qué se rechazó (punto 7 del enunciado).
+Ensayo de tres minutos (grabado o apuntes): «si mañana hay triciclo, ¿cuántos archivos abrimos?». Si la respuesta es «la vista, el XML y el =registrar=», el día 3 no quedó.
+No hace falta la app nativa estos cinco días. Sí hace falta que el JSON exista: el semestre ya pidió web y móvil.
+
+No se califica cuántos nombres del catálogo aparecen en el repo. Se califica si el inconveniente del enunciado se ve en el código, si Django se usó como marco y no como disfraz, y si supieron no implementar lo que no hacía falta.
+
+Pauta mínima al volver
+Día	Se espera ver
+1	Tabla de los siete inconvenientes atada a Django
+2	POST /pedidos + PRG + vista delgada
+3	Strategy + Adapter + new fuera de la vista
+4	Plantilla sin SQL; transacción; pedido guardado si la IA falla
+5	JSON del mismo folio; README; saber decir que no al PDF con Event Sourcing
+Cierre
+La pregunta importante no es «¿cuántos patrones utilicé?». Es:
+
+¿Qué problema resolví, por qué esta solución es adecuada y qué complejidad estoy introduciendo?
+
+Un buen diseño no es el que usa más patrones. Es el que usa las abstracciones necesarias para los problemas reales, sin complejidad de más.
+
+«Si mañana cambia esto, ¿qué parte de mi código tendría que modificar?»
+
+Si la respuesta es «demasiadas cosas», hay un problema de diseño.
