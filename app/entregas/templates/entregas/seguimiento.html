@@ -8,5 +8,7 @@
     <h1>Pedido {{ folio }}</h1>
     <p>Estado: {{ estado }}</p>
     <p>Entrega estimada: {{ eta|date:"d/m/Y H:i" }}</p>
+    {% if medio %}<p>Medio: {{ medio }}</p>{% endif %}
+    {% if detalle_plan %}<p>Plan: {{ detalle_plan }}</p>{% endif %}
 </body>
 </html>

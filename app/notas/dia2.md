@@ -9,7 +9,7 @@
 
 ## Qué se hizo, en pocas palabras
 
-Ya existe el proyecto Django (`plataforma`) con una sola app (`entregas`). Con `POST /pedidos/` se da de alta un pedido y el servidor redirige a `GET /pedidos/<id>/`, donde se ve el seguimiento (folio, estado y un ETA de mentira). Todavía no hay medios de entrega ni IA.
+Ya existe el proyecto Django (`plataforma`) con una sola app (`entregas`). Con `POST /pedidos/` se da de alta un pedido y el servidor redirige a `GET /pedidos/<id>/`, donde se ve el seguimiento (folio, estado y un ETA que simula nada más, sin funcionar exactamente). Todavía no hay medios de entrega ni IA.
 
 La vista se mantiene delgada: solo llama a `registrar_pedido(...)`, que es donde vive el trámite. La plantilla no consulta nada; recibe el contexto ya listo.
 
@@ -38,7 +38,6 @@ La vista se mantiene delgada: solo llama a `registrar_pedido(...)`, que es donde
 | 7 | Vista `detalle_pedido` | Llama a `obtener_seguimiento` y le pasa el resultado a la plantilla. | Sí. |
 | 8 | Plantilla | El motor de plantillas de Django pinta las variables. No consulta la base de datos. | La plantilla sí; el motor, no. |
 
-**Lo que no es GoF nuestro porque el marco ya lo instancia:** el Front Controller, la cadena de middleware, el motor de plantillas y el Repository (el ORM).
 
 
 ## Pruebas hechas
@@ -49,17 +48,3 @@ Hay 5 pruebas en `entregas/tests.py`. Se corren con `python manage.py test` y pa
 - `GET /pedidos/<id>/` responde 200 con folio y estado "Registrado".
 - Repetir el GET (como un F5) no crea otro pedido: la tabla sigue con un solo registro.
 - Un GET a `/pedidos/` no crea nada (405) y un pedido inexistente da 404.
-
-(Agregar aquí, solo si lo hacen: la prueba manual en el navegador del GET de un pedido creado desde la consola de Django.)
-
-
-## Pendiente para los siguientes días
-
-- Medios de entrega y la IA (todavía no existen).
-- Validar `destino`, que hoy se guarda tal como llega.
-- Un formulario para crear pedidos desde el navegador.
-
-
-## Dudas del equipo
-
-(Completar con lo que costó trabajo o no quedó claro este día.)
