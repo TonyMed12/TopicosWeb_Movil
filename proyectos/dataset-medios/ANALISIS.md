@@ -270,3 +270,336 @@ equivalentes al 29.11 % de los 158 errores.
 Mantendría las reglas del negocio para impedir recomendaciones
 imposibles. La decisión final también debe considerar el costo
 de cada error: el más frecuente no necesariamente es el más grave.
+
+
+### Actividad 4.
+**¿Qué columnas usa de verdad el modelo?**
+
+**Predigan.**
+
+Antes de revisar los resultados, propondría el siguiente orden de importancia para elegir el medio de transporte:
+
+1. `distancia_km`.
+2. `peso_kg`.
+3. `volumen_l`.
+4. `refrigerado`.
+5. `clima`.
+6. `hora_salida`.
+7. `zona_destino`.
+8. `prioridad`.
+9. `fragil`.
+10. `trafico`.
+11. `valor_declarado_mxn`.
+12. `largo_cm`.
+13. `ancho_cm`.
+14. `alto_cm`.
+
+Esperaría que el modelo no utilizara las tres dimensiones de la caja, porque ya cuenta con el volumen calculado. Sin embargo, esto es una predicción y debe comprobarse con el árbol.
+
+**Resultados de la importancia de las columnas:**
+
+| Columna | Importancia |
+|---|---:|
+| distancia_km | 32.1999 % |
+| volumen_l | 19.2928 % |
+| clima | 14.3802 % |
+| refrigerado | 13.1274 % |
+| peso_kg | 12.6274 % |
+| hora_salida | 5.8716 % |
+| fragil | 1.9851 % |
+| prioridad | 0.3087 % |
+| valor_declarado_mxn | 0.0723 % |
+| ancho_cm | 0.0655 % |
+| largo_cm | 0.0274 % |
+| alto_cm | 0.0254 % |
+| trafico | 0.0165 % |
+| zona_destino | 0.0000 % |
+
+Las importancias se obtuvieron con `feature_importances_`. En las columnas categóricas se sumaron las importancias de sus categorías para presentar un resultado por columna original.
+
+Por ejemplo, se sumaron las importancias de las columnas generadas para los distintos valores de `clima`.
+
+Los valores sin redondear suman 1, equivalente al 100 %. Estos porcentajes representan la importancia dentro del árbol, no el porcentaje de aciertos atribuible a cada columna.
+
+**Exactitud al quitar una columna y volver a entrenar:**
+
+| Columna eliminada | Exactitud | Cambio respecto a 92.10 % |
+|---|---:|---:|
+| distancia_km | 79.30 % | −12.80 puntos |
+| peso_kg | 90.40 % | −1.70 puntos |
+| largo_cm | 92.05 % | −0.05 puntos |
+| ancho_cm | 92.05 % | −0.05 puntos |
+| alto_cm | 92.05 % | −0.05 puntos |
+| volumen_l | 90.60 % | −1.50 puntos |
+| fragil | 91.55 % | −0.55 puntos |
+| refrigerado | 87.85 % | −4.25 puntos |
+| valor_declarado_mxn | 92.10 % | 0.00 puntos |
+| hora_salida | 89.10 % | −3.00 puntos |
+| prioridad | 92.15 % | +0.05 puntos |
+| zona_destino | 92.10 % | 0.00 puntos |
+| clima | 84.45 % | −7.65 puntos |
+| trafico | 92.10 % | 0.00 puntos |
+
+Los cambios están expresados en puntos porcentuales.
+
+**Herramientas.**
+
+Se utilizó un árbol con la misma configuración del proyecto:
+
+- `max_depth=8`.
+- `min_samples_leaf=5`.
+- `random_state=42`.
+
+Se mantuvieron los mismos 8000 envíos de entrenamiento y 2000 de prueba, separados mediante estratificación y `random_state=42`.
+
+Para cada experimento se eliminó una columna de la preparación, se volvió a entrenar el árbol y se evaluó con los mismos envíos de prueba.
+
+El modelo entrenado sin modificaciones produjo las mismas predicciones que el modelo guardado del proyecto.
+
+**Preguntas.**
+
+1. ¿Cuáles son las cuatro columnas más importantes? ¿Coinciden con las primeras preguntas del árbol del paso 8? ¿Y con su predicción?
+
+   Las cuatro columnas más importantes fueron:
+
+   - `distancia_km`: 32.1999 %.
+   - `volumen_l`: 19.2928 %.
+   - `clima`: 14.3802 %.
+   - `refrigerado`: 13.1274 %.
+
+   Sí aparecen entre las primeras preguntas del árbol. Se observan divisiones por distancia alrededor de 7.01 y 39.91 km, por volumen alrededor de 90 litros, por clima de lluvia y por refrigeración.
+
+   El orden de importancia global no tiene que ser exactamente el mismo que el orden de las preguntas, porque la importancia considera las divisiones de todo el árbol.
+
+   Mi predicción coincidió en distancia, volumen y refrigeración entre las cuatro primeras. Sobreestimé el peso, que quedó quinto, y subestimé el clima, que quedó tercero.
+
+   Las dimensiones sí se utilizaron, aunque con importancias muy pequeñas. La única columna con importancia exactamente cero fue `zona_destino`.
+
+2. ¿Qué columna, al quitarla, baja más la exactitud? ¿Cuáles no la cambian nada?
+
+   La mayor caída ocurrió al quitar `distancia_km`: la exactitud pasó de 92.10 % a 79.30 %, una reducción de 12.80 puntos porcentuales.
+
+   Las columnas que se pudieron quitar sin cambiar la exactitud fueron:
+
+   - `valor_declarado_mxn`.
+   - `zona_destino`.
+   - `trafico`.
+
+   En los tres casos se mantuvo en 92.10 %.
+
+   Al quitar `prioridad`, la exactitud aumentó a 92.15 %. Esto equivale a un acierto adicional y no demuestra, por sí solo, que eliminarla mejore el modelo en general.
+
+   La importancia de una columna y el efecto de quitarla no son lo mismo. Al volver a entrenar, el árbol puede reorganizar sus preguntas y aprovechar otras columnas.
+
+   Además, mantener la misma exactitud no significa necesariamente acertar y fallar exactamente los mismos envíos.
+
+3. La zona de destino tiene importancia cero, pero en la actividad 1 vieron que el dron nunca va al centro. ¿Cómo puede ser que el modelo no use la zona y, aun así, la plataforma nunca mande un dron al centro?
+
+   La plataforma combina el modelo con reglas del negocio.
+
+   Aunque el árbol no utilice `zona_destino` y pueda sugerir un dron para un envío al centro, la función `es_posible` rechaza esa recomendación. Después, el recomendador busca otra alternativa permitida.
+
+   Además, el generador del dataset ya impide asignar etiquetas de dron a envíos al centro.
+
+   Por tanto, que el dataset no tenga drones al centro no demuestra que el árbol haya aprendido esa prohibición. La regla externa es la que garantiza que la recomendación final respete esa restricción.
+
+**Para pensar.**
+
+No dejaría de pedir un dato únicamente porque este árbol le asigne importancia cero.
+
+Por ejemplo, `zona_destino` sigue siendo necesaria para impedir drones al centro y bicicletas a zonas rurales. Otros datos pueden servir para calcular costos, gestionar seguros, realizar auditorías o entrenar modelos futuros.
+
+Las dimensiones permiten calcular el volumen y también pueden ser útiles para comprobar que el paquete cabe físicamente.
+
+Sí revisaría qué información necesita capturarse manualmente. El volumen puede calcularse a partir de las dimensiones; la hora puede obtenerse del horario programado; el clima y el tráfico podrían consultarse automáticamente.
+
+La decisión debe considerar las necesidades de toda la plataforma, no únicamente las columnas que utiliza este modelo.
+
+### Actividad 5.
+**El dron es minoría: ¿hay que balancear el dataset?**
+
+**Parte A — Pensar antes de tocar los datos.**
+
+1. ¿Qué exactitud tendría un modelo que nunca dice dron y siempre acierta todo lo demás? ¿Y uno que siempre dice moto? ¿Qué les dice eso sobre usar la exactitud para juzgar un dataset desbalanceado? ¿Qué medidas del paso 7 usarían en su lugar?
+
+   Un modelo que nunca predice dron y acierta todos los demás envíos tendría 90.52 % de exactitud en el dataset completo, porque solamente fallaría los 948 drones de los 10000 envíos.
+
+   En los 2000 envíos de prueba tendría 90.50 %, porque hay 190 drones reales.
+
+   Un modelo que siempre predice moto tendría 45.78 % de exactitud en el dataset completo y 45.75 % en la prueba.
+
+   Esto muestra que una exactitud aparentemente alta puede ocultar que el modelo no reconoce una clase: el primer modelo tendría recall de dron igual a cero.
+
+   Usaría precision, recall y F1 por clase, además de la matriz de confusión. También revisaría F1 macro, que da el mismo peso a cada clase, y el número de sugerencias imposibles.
+
+2. ¿Por qué hay tan pocos drones? ¿Es un error de los datos o refleja cómo funciona la empresa? ¿Cambia eso la decisión de balancear?
+
+   El dataset es sintético y representa una operación donde el dron solamente puede utilizarse bajo condiciones específicas:
+
+   - Peso máximo de 2.5 kg.
+   - Volumen máximo de 12 litros.
+   - Distancia máxima de 15 km.
+   - Clima despejado.
+   - Horario desde las 6:00 hasta antes de las 21:00.
+   - Destino fuera del centro.
+   - Paquete sin refrigeración.
+
+   Además, que el dron sea posible no significa que sea la opción más conveniente. El generador compara costos y condiciones entre los medios permitidos.
+
+   Por eso, la minoría del dron está prevista en el diseño y no demuestra un error en los datos.
+
+   No balancearía solamente para que todas las clases tengan la misma cantidad. Primero revisaría cómo reconoce el modelo los drones y qué costo tienen sus errores.
+
+3. Si deciden balancear, ¿se balancea antes o después de separar los datos de entrenamiento y de prueba? ¿Se balancean también los datos de prueba?
+
+   Primero separaría entrenamiento y prueba. Después balancearía únicamente los datos de entrenamiento.
+
+   Si repetimos ejemplos antes de separar, podrían quedar copias del mismo envío en entrenamiento y prueba. Esto provoca fuga de información y la evaluación deja de representar correctamente el comportamiento con envíos nuevos.
+
+   No balancearía los datos de prueba. Los mantendría con su distribución original para representar las condiciones del dataset y comparar todas las estrategias con los mismos envíos.
+
+   Si también balanceamos la prueba, cambia el peso de cada clase en la exactitud y cambia la interpretación de la precision. Ya no estaríamos realizando la misma evaluación.
+
+**Parte B — Probar estrategias.**
+
+Se comparó el modelo original con tres formas de balancear:
+
+- **Submuestreo:** reducir todas las clases a 758 ejemplos, que es la cantidad de drones en entrenamiento.
+- **Sobremuestreo:** repetir ejemplos de las clases minoritarias hasta que cada clase tenga 3663 filas, que es la cantidad de motos en entrenamiento.
+- **Pesos de clase:** mantener los 8000 envíos y utilizar `class_weight="balanced"` para dar mayor peso a las clases menos frecuentes durante el entrenamiento.
+
+En todos los casos se conservaron los mismos parámetros del árbol, excepto `class_weight` en la estrategia correspondiente.
+
+**Resultados con los mismos 2000 envíos de prueba:**
+
+| Estrategia | Envíos de entrenamiento | Exactitud | Precision dron | Recall dron | Veces que predice dron | Sugerencias imposibles |
+|---|---:|---:|---:|---:|---:|---:|
+| Sin balancear | 8000 | 92.10 % | 83.90 % | 90.53 % | 205 | 31 |
+| Submuestreo | 3032 | 89.75 % | 88.94 % | 93.16 % | 199 | 29 |
+| Sobremuestreo | 14652 | 90.20 % | 76.61 % | 100.00 % | 248 | 35 |
+| class_weight balanced | 8000 | 90.30 % | 76.61 % | 100.00 % | 248 | 35 |
+
+La prueba contiene 190 drones reales.
+
+Las sugerencias imposibles se contaron aplicando `es_posible` a la predicción directa de cada modelo, antes de que la plataforma la corrija. El conteo incluye sugerencias de cualquier medio de transporte.
+
+**Detalle de los resultados del dron:**
+
+| Estrategia | Drones detectados | Drones no detectados | Predicciones dron incorrectas |
+|---|---:|---:|---:|
+| Sin balancear | 172 | 18 | 33 |
+| Submuestreo | 177 | 13 | 22 |
+| Sobremuestreo | 190 | 0 | 58 |
+| class_weight balanced | 190 | 0 | 58 |
+
+El modelo original detectó 172 de los 190 drones reales. El submuestreo detectó 177. El sobremuestreo y los pesos de clase detectaron los 190, pero también recomendaron dron para más envíos cuya etiqueta real era otro medio.
+
+**Trampa deliberada.**
+
+Para realizar una evaluación incorrecta a propósito, se repitieron ejemplos hasta igualar todas las clases antes de separar entrenamiento y prueba.
+
+Esto permitió que copias de un mismo envío quedaran en ambos conjuntos y cambió la distribución de la prueba.
+
+| Resultado | Valor |
+|---|---:|
+| Filas de entrenamiento | 14649 |
+| Filas de prueba | 3663 |
+| Filas de prueba con características idénticas a alguna de entrenamiento | 2392 |
+| Exactitud | 91.92 % |
+| Precision dron | 91.03 % |
+| Recall dron | 97.49 % |
+| Veces que predice dron | 981 |
+| Sugerencias imposibles | 46 |
+
+Comparado con el sobremuestreo realizado correctamente, la exactitud aparente aumentó de 90.20 % a 91.92 % y la precision del dron pasó de 76.61 % a 91.03 %.
+
+Sin embargo, el recall bajó de 100.00 % a 97.49 %. No todas las métricas mejoraron y la exactitud tampoco superó al modelo original sin balancear.
+
+La mejora aparente no demuestra una mayor capacidad para generalizar. Hay 2392 filas de prueba cuyas características también están presentes en entrenamiento.
+
+Además, la prueba ahora contiene aproximadamente 25 % de cada clase. Aumentar artificialmente la proporción de drones puede elevar su precision sin que eso represente una mejora ante la distribución original.
+
+Los conteos absolutos de predicciones e imposibles tampoco deben compararse directamente con los anteriores, porque esta prueba tiene 3663 filas en lugar de 2000.
+
+**Parte C — Interpretar.**
+
+1. ¿Qué pasó con el recall del dron y qué pasó con su precision? ¿Por qué una sube cuando la otra baja?
+
+   Con sobremuestreo y pesos de clase, el recall del dron aumentó de 90.53 % a 100.00 %, mientras que la precision bajó de 83.90 % a 76.61 %.
+
+   Los modelos identificaron todos los drones reales, pero también clasificaron como dron más envíos que pertenecían a otros medios.
+
+   Al aumentar la influencia del dron durante el entrenamiento, el árbol puede ampliar las situaciones en las que lo recomienda. Esto permite recuperar drones que antes no detectaba, pero también produce más falsos positivos.
+
+   Sin embargo, no es obligatorio que una métrica suba cuando la otra baja. Con submuestreo mejoraron tanto la precision como el recall del dron, aunque disminuyó la exactitud global.
+
+2. ¿Alguna estrategia dejó al modelo con muchos menos datos de entrenamiento? ¿Qué se pierde con eso?
+
+   El submuestreo redujo el entrenamiento de 8000 a 3032 ejemplos.
+
+   Se eliminaron 4968 ejemplos, equivalentes al 62.10 % del entrenamiento original.
+
+   Se pierde diversidad de las clases mayoritarias y pueden desaparecer ejemplos de situaciones poco frecuentes. Esto puede dificultar que el modelo aprenda correctamente los límites entre esas clases.
+
+   En este experimento, la exactitud global bajó de 92.10 % a 89.75 %.
+
+3. Si dos estrategias distintas les dieron números casi iguales para el dron, expliquen por qué son, en el fondo, la misma idea.
+
+   El sobremuestreo y `class_weight="balanced"` obtuvieron la misma precision y recall del dron, y ambos lo predijeron 248 veces.
+
+   Las dos estrategias aumentan la influencia relativa de las clases minoritarias. El sobremuestreo lo hace repitiendo ejemplos; los pesos de clase lo hacen aumentando el peso de esos ejemplos en los cálculos del árbol.
+
+   No son exactamente equivalentes. Las repeticiones se seleccionan aleatoriamente y parámetros como `min_samples_leaf` dependen del número de filas.
+
+   Por eso, aunque las métricas del dron coincidieron, la exactitud global fue ligeramente distinta: 90.20 % con sobremuestreo y 90.30 % con pesos de clase.
+
+   Tener las mismas métricas tampoco demuestra que ambos modelos hayan realizado exactamente las mismas predicciones.
+
+4. En el paso 15, el motivo de la respuesta dice «confianza 84 %». Después de balancear, ¿ese porcentaje sigue significando lo mismo?
+
+   No debe interpretarse automáticamente como una probabilidad del 84 % de acertar en la operación real.
+
+   En un árbol de decisión, `predict_proba` utiliza las proporciones de clases de la hoja donde termina el envío. Cuando se utilizan pesos de clase, esas proporciones se calculan con los pesos correspondientes.
+
+   Balancear modifica la distribución de entrenamiento o la influencia de cada clase. El dron deja de representar aproximadamente el 9.5 % de los ejemplos y pasa a tener una presencia o un peso parecido al de las demás clases.
+
+   Por eso, el porcentaje puede dejar de reflejar la frecuencia real del dron.
+
+   Incluso antes de balancear, la confianza del árbol no garantiza una probabilidad bien calibrada. Para presentarla como tal habría que evaluarla y, si corresponde, calibrarla con datos separados que mantengan la distribución real.
+
+**Parte D — Decidir.**
+
+**Para pensar.**
+
+Como recomendación provisional, mantendría el modelo sin balancear.
+
+Obtuvo la mayor exactitud global, 92.10 %, y ya detecta 172 de los 190 drones reales. También obtuvo el mayor F1 macro:
+
+| Estrategia | F1 macro |
+|---|---:|
+| Sin balancear | 91.24 % |
+| Submuestreo | 89.74 % |
+| Sobremuestreo | 89.57 % |
+| class_weight balanced | 89.54 % |
+
+Esto no demuestra que sea necesariamente el modelo más rentable, porque todavía no conocemos el costo económico de cada tipo de error.
+
+Si no utilizar un dron cuando convenía fuera muy costoso, consideraría los modelos balanceados. El sobremuestreo y los pesos de clase recuperaron los 18 drones que el modelo original no detectaba, pero aumentaron de 33 a 58 las recomendaciones incorrectas de dron.
+
+Si recomendar un dron cuando no conviene implica más costos, retrasos o uso ineficiente de recursos, esa pérdida de precision puede ser importante.
+
+Las reglas del negocio corrigen las recomendaciones imposibles: por ejemplo, un dron de noche, con lluvia, al centro o con un paquete demasiado pesado.
+
+Sin embargo, no corrigen necesariamente una recomendación permitida pero inconveniente. De las 58 predicciones incorrectas de dron de los modelos con sobremuestreo y pesos de clase, 21 incumplen las reglas y 37 sí están permitidas por `es_posible`.
+
+Las reglas tampoco obligan a elegir dron cuando el modelo recomienda otro medio permitido.
+
+Por eso, antes de cambiar el modelo de la plataforma, también evaluaría las recomendaciones finales después del filtro y el costo de cada decisión.
+
+Si mañana la empresa compra el doble de drones, no duplicaría automáticamente sus ejemplos en el dataset. Revisaría cómo cambian la disponibilidad, los costos y la capacidad de operación.
+
+Tener más drones puede hacer conveniente utilizarlos en más envíos, pero no elimina sus restricciones de peso, volumen, distancia, clima, horario o zona.
+
+Actualizaría la lógica de asignación y recopilaría nuevos datos antes de decidir si conviene reentrenar o balancear.
+
+Finalmente, estos resultados corresponden a una sola separación fija de entrenamiento y prueba. Para tomar una decisión de producción necesitaríamos validación adicional y una evaluación final independiente.

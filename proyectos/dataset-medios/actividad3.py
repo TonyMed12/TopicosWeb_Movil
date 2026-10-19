@@ -3,6 +3,7 @@ import joblib
 from sklearn.model_selection import train_test_split
 from entrenar_arbol import NUMERICAS, CATEGORICAS, OBJETIVO
 
+# Separar caracteristicas
 datos = pd.read_csv("envios_medios.csv")
 
 x = datos[NUMERICAS + CATEGORICAS]
@@ -16,18 +17,23 @@ x_entreno, x_prueba, y_entreno, y_prueba = train_test_split(
     random_state=42
 )
 
+## Cargar el modelo
+
 modelo = joblib.load("modelo_medios.joblib")
 predicciones = modelo.predict(x_prueba)
 
+## Misma tabla
 comparacion = x_prueba.assign(
     real=y_prueba,
     predicho=predicciones
 )
 
+# Nomas guardar los errores
 errores = comparacion[
     comparacion["real"] != comparacion["predicho"]
 ]
 
+# Contar confusiones
 confusiones = (
     errores.groupby(["real", "predicho"])
     .size()
