@@ -49,25 +49,96 @@ c) No fue culpa de Docker, si no del almacenamiento donde se mantenía, al queda
 
 ## C3
 
+La variable global solo guarda el destino dentro de la memoria del proceso que atendió la primera petición. Si la siguiente petición llega a otro worker o a otra copia de Django, ese valor no estará disponible, ya que los procesos no comparten su memoria. Además, una variable global no separa los datos de cada usuario y podría terminar mezclando sus destinos.
+
+Con request.session se relacionan los datos con la sesión de cada usuario. En la configuración del proyecto, el navegador conserva una cookie con el identificador de sesión y los datos se guardan en la base de datos compartida. Así, cualquier copia de Django puede recuperar el destino, aunque no sea la misma que atendió la primera petición.
+
 ## C4
+
+a) Si cada una de las cinco copias ejecuta la tarea de enviar el aviso, el cliente podría recibir cinco notificaciones del mismo evento. Esta tarea debe ejecutarse mediante un proceso separado o un mecanismo que coordine su ejecución. También conviene registrar que el aviso ya fue enviado para evitar duplicarlo si hay reintentos.
+
+b) Las migraciones modifican la estructura de la misma base de datos que utilizan todas las copias. Si cada una intenta ejecutarlas al mismo tiempo, pueden generarse conflictos. Por eso se ejecutan como un paso separado del despliegue y las aplicaciones esperan a que termine correctamente.
+
+c) En el escenario planteado se utilizan 80 conexiones. Si PostgreSQL permite 100, quedan 20 disponibles, y también hay que considerar las conexiones de administración y de otros procesos. Por eso no podemos agregar copias sin revisar la capacidad de la base de datos.
+
+Si cada contenedor utiliza un archivo SQLite propio, cada copia terminará guardando información diferente. PostgreSQL permite que todas consulten y modifiquen una misma base de datos compartida.
 
 ## D1
 
+a) Obtener una exactitud alta con los mismos datos del entrenamiento no demuestra que el modelo vaya a funcionar igual con datos nuevos. El árbol ya utilizó esos ejemplos para construir sus decisiones y podría haber aprendido detalles específicos de ellos.
+
+b) Separar un 20% permite evaluar el modelo con datos que no utilizó durante el entrenamiento. El 80% restante se usa para entrenarlo y después se comparan sus predicciones contra las respuestas del conjunto de prueba.
+
+c) La estratificación mantiene aproximadamente la misma proporción de cada medio en los dos conjuntos. Esto es importante porque el dron solo tiene 948 de los 10,000 envíos y queremos que también esté representado en la prueba.
+
 ## D2
+
+Si representamos despejado como 0, lluvia como 1 y viento fuerte como 2, estamos introduciendo un orden numérico que no necesariamente corresponde al significado del clima. El árbol puede hacer cortes sobre esos números y agrupar categorías según ese orden artificial.
+
+One-hot crea una columna para cada categoría e indica con 0 o 1 cuál corresponde al envío. Así se representa el clima sin asignarle una posición numérica frente a los demás.
+
+La preparación se guarda junto con el modelo para que los datos nuevos reciban la misma transformación que los del entrenamiento. De otra forma podríamos cambiar el orden de las columnas o la representación de las categorías y obtener resultados incorrectos.
 
 ## D3
 
+a) El árbol sin límite tiene 346 hojas y puede ajustarse demasiado a los detalles de los datos de entrenamiento. Si obtiene un resultado muy alto al entrenar, pero baja al evaluar datos nuevos, está presentando sobreajuste. Tener más hojas no significa que vaya a generalizar mejor.
+
+b) Elegiría el árbol con profundidad de 8 porque la mejora del de profundidad 10 es pequeña y su tamaño es casi el doble. El de 8 mantiene un resultado parecido con una estructura más sencilla, que también es más fácil de revisar y explicar.
+
 ## D4
+
+a) Una precisión de 0.839 significa que, de todos los envíos que el modelo clasificó como dron, el 83.9% realmente tenía esa etiqueta. Un recall de 0.905 significa que logró identificar el 90.5% de todos los envíos que estaban etiquetados como dron.
+
+b) En este caso sería más grave recomendar un dron para un envío que no debería utilizarlo, porque podría incumplir restricciones y poner en riesgo la entrega. Por eso conviene cuidar la precisión del dron. No detectar uno que sí podía utilizarlo puede hacer que se elija otro transporte, pero no representa necesariamente el mismo riesgo.
+
+c) El modelo puede equivocarse porque los datos contienen casos parecidos con etiquetas distintas, porque faltan características que expliquen la decisión o porque el árbol no representa perfectamente todos los patrones. Por eso su resultado no sustituye la revisión de las reglas del negocio.
 
 ## D5
 
+La mejora del Random Forest es de aproximadamente un punto porcentual, pero también hay que considerar el tamaño y la facilidad para explicar sus decisiones. El árbol ocupa alrededor de 14 KB, mientras que el bosque ocupa cerca de 60 MB. Si cada proceso carga una copia, esa diferencia también aumenta el consumo de memoria.
+
+El árbol permite seguir una ruta de decisiones para entender el resultado. En el Random Forest la explicación es menos directa porque combina varios árboles.
+
+La vista de Django no tendría que cambiar si continúa utilizando la misma interfaz del recomendador. Se puede implementar otra clase que cargue el bosque y entregue una Sugerencia con el mismo formato que espera la aplicación.
+
 ## E1
+
+a) El árbol aprende relaciones entre los datos y las etiquetas, pero eso no garantiza que respete siempre una restricción como impedir que el dron opere de noche. Puede recomendarlo si los patrones aprendidos lo llevan a esa respuesta.
+
+b) Un modelo más grande tampoco garantiza que desaparezcan todos los errores. Las restricciones del negocio deben comprobarse de forma explícita, porque tienen que cumplirse aunque el modelo asigne una probabilidad alta a una opción incorrecta.
+
+c) Las restricciones se mantienen en reglas.py para que se apliquen sin depender del modelo utilizado. Así, si cambiamos del árbol al Random Forest o a un servicio externo, las mismas reglas siguen revisando si el medio propuesto es válido.
 
 ## E2
 
+No es una contradicción, porque los pedidos y el modelo tienen necesidades diferentes. Un pedido contiene información que cambia y debe estar disponible para cualquier copia de la aplicación, por eso requiere almacenamiento compartido y persistente.
+
+El modelo cargado se utiliza para consultar y hacer predicciones, sin modificarlo durante cada petición. Por eso cada proceso puede mantener su propia copia en memoria, siempre que se controle qué versión utiliza y que haya memoria suficiente.
+
+Además, mantenerlo cargado evita leer y reconstruir el archivo .joblib en cada petición, lo que reduciría el rendimiento.
+
 ## E3
 
+El problema puede aparecer porque el archivo .joblib se generó con una versión de scikit-learn y la nueva imagen instaló otra. Al no fijar las versiones en requirements.txt, una reconstrucción puede crear un entorno distinto, aunque el código del proyecto siga igual.
+
+Para evitarlo se deben fijar las versiones utilizadas para entrenar y ejecutar el modelo, incluyendo sus dependencias relevantes, y comprobar que el modelo carga correctamente antes del despliegue.
+
+Esto se relaciona con los entornos virtuales y Docker porque ambos ayudan a controlar las dependencias. Sin embargo, el contenedor no garantiza por sí solo que dos construcciones instalen las mismas versiones si estas no quedaron especificadas.
+
 ## F1
-a) ...
-b) ...
-c) ...
+
+a) Se puede crear una clase que implemente la interfaz RecomendadorIA y su método sugerir. Esta clase enviaría los datos al servicio externo y convertiría la respuesta al formato Sugerencia que ya utiliza la plataforma.
+
+Esto corresponde al patrón Adapter, porque permite conectar una implementación externa con la interfaz que espera nuestra aplicación. Las vistas, la creación de los medios y las estrategias de entrega pueden mantenerse mientras se conserve ese contrato. También deben seguir aplicándose las reglas del negocio.
+
+b) La petición llega a /entregas/recomendar/ y la vista valida el JSON, los campos requeridos y los valores numéricos. Después consulta al recomendador para obtener una propuesta de medio.
+
+Las reglas revisan si la propuesta es posible para ese paquete. Si no cumple, se debe buscar una alternativa válida. Después crear_medio construye el objeto correspondiente y su estrategia calcula el tiempo y las indicaciones del plan. Finalmente, la vista devuelve la respuesta en JSON.
+
+La IA participa en la recomendación, pero la validación, las restricciones, la creación del medio y el cálculo del plan siguen siendo responsabilidades de la aplicación.
+
+c) La incorporación de IA no elimina la necesidad de los patrones de diseño. El Adapter permite cambiar de proveedor o de formato de respuesta sin modificar todas las partes que utilizan el recomendador.
+
+También permite incorporar un tiempo máximo de espera y un recomendador de respaldo si el servicio externo falla. Las estrategias mantienen separado el cálculo de cada medio de transporte, mientras que las reglas siguen controlando las restricciones del negocio.
+
+Si todo se resolviera directamente en la vista, esta terminaría mezclando las llamadas al servicio, el manejo de errores, las reglas y el cálculo del plan, haciendo más difícil mantener la aplicación.
