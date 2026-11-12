@@ -8,7 +8,7 @@ Material de referencia de la materia: <https://ealcaraz85.github.io/topicoswebmo
 
 La materia gira en torno a los **patrones de diseño de software**
 
-Este repositorio contiene únicamente entregas individuales. El repositorio de equipo para la entrega del proyecto final recomendador de rutas es 
+Este repositorio contiene únicamente entregas individuales. El repositorio de equipo para la entrega del proyecto final recomendador de rutas es https://github.com/Cesaredmyt/proyectoEntregaTopicos/
 
 ## Dónde encontrar cada actividad
 
