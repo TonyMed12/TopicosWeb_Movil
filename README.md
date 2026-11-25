@@ -36,6 +36,7 @@ Este repositorio contiene únicamente entregas individuales. El repositorio de e
 | 31 ago 2026 | Ejercicio 31-08 | Ejercicio de clase |
 | 2-3 sep 2026 | Misiones 1-2 | Misiones |
 | 3 sep 2026 | Auditoría universitaria | Auditoría de un proyecto |
+| 4 sep 2026 | Auditorías de cinco proyectos (en pareja) | Auditoría de Cinerex, Hotelluna, Pasofit, Sabores y Tallerpro en `auditorias_04-sep/` |
 | 11 sep 2026 | Actividad en clase por equipos | Trabajo en equipo |
 | 15 sep 2026 | Análisis de implementaciones en Java y Python | Comparación de implementaciones |
 | 27 sep 2026 | Avance de días 1 y 2 | Cinco días (sin clase) |
@@ -46,6 +47,7 @@ Este repositorio contiene únicamente entregas individuales. El repositorio de e
 | 28 oct 2026 | Análisis de envíos-data | Dataset de envíos |
 | 28 oct 2026 | Segunda parte de evaluación | Evaluación |
 | 4 nov 2026 | Evaluación P1 | Evaluación |
+| 12 nov 2026 | Dataset para un asistente con recuperación (RAG) | RAG |
 
 
 ## Autor
